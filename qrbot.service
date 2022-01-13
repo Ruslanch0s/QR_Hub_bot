@@ -1,0 +1,10 @@
+[Unit]
+Description=My qrbot service
+After=multi-user.target
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/bots/qrbot
+Restart=always
+ExecStart=/home/ubuntu/bots/qrbot/venv/bin/python /home/ubuntu/bots/qrbot/app.py
+[Install]
+WantedBy=multi-user.target
