@@ -1,4 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
-cancel = ReplyKeyboardMarkup(resize_keyboard=True)
-cancel.add(KeyboardButton(text="Отменить"))
+
+cancel_button = KeyboardButton(text="Отменить")
+

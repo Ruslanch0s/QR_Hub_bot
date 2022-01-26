@@ -13,7 +13,7 @@ def read_qr_code(path_to_download):
     return wrote
 
 
-def gen_qr_code(message, path_to_download):
+def gen_qr_code(message, path_to_download, path_to_save=None):
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
@@ -37,8 +37,11 @@ def gen_qr_code(message, path_to_download):
 
     black_1 = (0, 0, 0, 0)
     black_2 = (0, 0, 0, 230)
-    white_1 = (255, 255, 255, 0)
+    white_1 = (255, 255, 255, 50)
     white_2 = (255, 255, 255, 230)
+
+    white_3 = (0, 0, 0, 0)
+
     idraw = ImageDraw.Draw(back_im, "RGBA")
 
     x = 0
@@ -68,11 +71,11 @@ def gen_qr_code(message, path_to_download):
         x = 0
         y += coeff
 
-    idraw.rectangle((0, 0, coeff * 9, coeff * 9), fill=white_2)
-    idraw.rectangle((length_qr, 0, length_qr - coeff * 9, coeff * 9), fill=white_2)
-    idraw.rectangle((0, length_qr, coeff * 9, length_qr - coeff * 9), fill=white_2)
+    idraw.rectangle((0, 0, coeff * 9, coeff * 9), fill=white_1)
+    idraw.rectangle((length_qr, 0, length_qr - coeff * 9, coeff * 9), fill=white_1)
+    idraw.rectangle((0, length_qr, coeff * 9, length_qr - coeff * 9), fill=white_1)
     idraw.rectangle((length_qr - coeff * 10, length_qr - coeff * 9, length_qr - coeff * 6, length_qr - coeff * 6),
-                    fill=white_2)
+                    fill=white_1)
 
     idraw.rectangle((coeff, coeff, coeff * 8, coeff * 2), fill=black_2)
     idraw.rectangle((length_qr - coeff * 8, coeff, length_qr - coeff, coeff * 2), fill=black_2)
@@ -105,6 +108,9 @@ def gen_qr_code(message, path_to_download):
                     fill=black_2)
 
     background.paste(back_im, (0, 0), back_im)
+    if path_to_save is not None:
+        path_to_download = path_to_save
+
     background.save(path_to_download)
     return True
 

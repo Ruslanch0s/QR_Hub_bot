@@ -1,1 +1,1 @@
-from .qrgenerator import cancel
+from .qrgenerator import cancel_button
