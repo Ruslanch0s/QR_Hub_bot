@@ -16,7 +16,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # for postgresql
 PG_USER = env.str("PG_USER")
 PG_PASSWORD = env.str("PG_PASSWORD")
-PG_DB_NAME = env.str("PG_NAME")
+PG_DB_NAME = env.str("PG_DB_NAME")
 PG_HOST = env.str("PG_HOST")
 
 # GINO

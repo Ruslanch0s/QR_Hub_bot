@@ -2,7 +2,7 @@ version: '3'
 
 services:
   database:
-    env_file: .
+    env_file: .env
     container_name: postgres_db
     image: postgres
     environment:
