@@ -7,9 +7,9 @@ from aiogram.dispatcher import FSMContext
 from aiogram.types import ContentType, ReplyKeyboardMarkup, KeyboardButton, ReplyKeyboardRemove
 from keyboards.default import cancel_button
 from keyboards.inline import images_keyboard, template_button, image_callback, template_callback
-from loader import dp, logging
+from loader import dp
 from utils.qrgenerator import gen_qr_code, read_qr_code
-from utils import user_language
+from utils import user_language, logger
 
 
 @dp.message_handler(text=["Отменить", "Cancel"], state="send_image")
@@ -55,10 +55,12 @@ async def get_text_from_qr(message: types.Message, state: FSMContext):
                              reply_markup=types.InlineKeyboardMarkup().add(template_button))
         await state.update_data(send_image=text_from_qr)
         await state.set_state("send_image")
+        logger.info(f'success - read-qr - {message.from_user.id} - {message.from_user.first_name}')
+
     else:
         await message.answer(str(await user_language(message, state, "error_read_qr")))
         await state.reset_state(with_data=False)
-        logging.info(f'--- conversion error {message.chat.id, message.from_user.first_name}')
+        logger.info(f'error - read-qr - {message.from_user.id} - {message.from_user.first_name}')
 
 
 @dp.callback_query_handler(image_callback.filter(), state="send_image")
@@ -80,9 +82,7 @@ async def get_template(callback_query: types.CallbackQuery, callback_data: dict,
     await callback_query.message.answer(await user_language(callback_query.message, state, 'success'))
     await callback_query.message.answer(await user_language(callback_query.message, state, 'start'))
     await state.reset_state(with_data=False)
-    logging.info(
-        f'--- successful conversion {callback_query.message.chat.id, callback_query.from_user.first_name, template_name}')
-
+    logger.info(f'success - template-image - {callback_query.from_user.id} - {callback_query.from_user.first_name}')
     path_to_save.unlink()
 
 
@@ -112,13 +112,15 @@ async def get_picture(message: types.Message, state: FSMContext):
     successful_generation = gen_qr_code(message=text_for_generate, path_to_download=path_to_download)
     if successful_generation is False:
         await message.answer(await user_language(message, state, "error_format"))
+        logger.info(f'error - user-image - {message.from_user.id} - {message.from_user.first_name}')
+
     else:
         photo = types.InputFile(path_or_bytesio=path_to_download)
         await dp.bot.send_photo(message.chat.id, photo)
         await message.answer(await user_language(message, state, "success"))
         await message.answer(await user_language(message, state, "start"))
         await state.reset_state(with_data=False)
-        logging.info(f'--- successful conversion {message.chat.id, message.from_user.first_name}')
+        logger.info(f'success - user-image - {message.from_user.id} - {message.from_user.first_name}')
 
     path_to_download.unlink()
 
@@ -126,3 +128,4 @@ async def get_picture(message: types.Message, state: FSMContext):
 @dp.message_handler(content_types=ContentType.TEXT, state="send_image")
 async def wrong_type(message: types.Message, state: FSMContext):
     await message.answer(await user_language(message, state, 'error_get_image'))
+    logger.info(f'error - wrong_type(text) - {message.from_user.id} - {message.from_user.first_name}')
