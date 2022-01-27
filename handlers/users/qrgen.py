@@ -81,7 +81,7 @@ async def get_template(callback_query: types.CallbackQuery, callback_data: dict,
     await callback_query.message.answer(await user_language(callback_query.message, state, 'start'))
     await state.reset_state(with_data=False)
     logging.info(
-        f'--- successful conversion {callback_query.message.chat.id, callback_query.message.from_user.first_name, template_name}')
+        f'--- successful conversion {callback_query.message.chat.id, callback_query.from_user.first_name, template_name}')
 
     path_to_save.unlink()
 
