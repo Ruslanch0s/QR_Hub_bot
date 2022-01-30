@@ -15,7 +15,7 @@ async def bot_start(message: types.Message):
     id_user = message.from_user.id
     try:
         user = await User(
-            name=message.from_user.username,
+            name=message.from_user.first_name,
             id=id_user
         ).create()
     except asyncpg.UniqueViolationError:
