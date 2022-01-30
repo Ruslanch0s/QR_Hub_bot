@@ -22,4 +22,7 @@ data = {
             "Support: @Ruslanch0s_support",
     'templates_button': 'Templates',
     'cancel_button': 'Cancel',
+    'unknown_error': 'Unknown error',
+    'add_to_wallet_button': 'Add to Apple Wallet',
+
 }

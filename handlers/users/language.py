@@ -16,7 +16,7 @@ async def change_language(callback_query: types.CallbackQuery, callback_data: di
         text = "Language has been changed"
 
     await callback_query.message.answer(text)
-    await callback_query.message.answer(await user_language(callback_query.message, state, 'start'))
+    await callback_query.message.answer(await user_language(callback_query.from_user, 'start'))
 
 
 @dp.message_handler(commands=['language'], commands_prefix='/', state='*')

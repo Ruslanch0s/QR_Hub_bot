@@ -1,19 +1,22 @@
 import logging
 
 from aiogram import types
-from aiogram.dispatcher import FSMContext
 
 from . import english
 from . import russian
 
 
-async def user_language(message: types.Message, state: FSMContext, text: str):
+async def user_language(user: types.User, text: str) -> str:
+    from loader import dp
+
+    user_id = user.id
+    state = dp.current_state(chat=user_id, user=user_id)
     user_data = await state.get_data()
 
     try:
         language = user_data['language']
     except KeyError:
-        default_language = message.from_user.language_code
+        default_language = user.language_code
         if default_language == 'ru':
             await state.update_data(language='RU')
             language = 'RU'
