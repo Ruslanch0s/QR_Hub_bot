@@ -67,6 +67,7 @@ async def check_payment(call: CallbackQuery, state: FSMContext):
 
 
 @dp.message_handler(content_types=ContentType.ANY, state=["confirm_pay"])
+@dp.throttled(rate=5)
 async def wrong_choice(message: types.Message):
     await message.answer(await user_language(message.from_user, 'error_choice'))
     payments.logger.info(f'error - choice(pay) - {message.from_user.id} - {message.from_user.first_name}')

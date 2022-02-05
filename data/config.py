@@ -20,7 +20,7 @@ PG_DB_NAME = env.str("PG_DB_NAME")
 PG_HOST = env.str("PG_HOST")
 
 # GINO
-DATABASE = env.str("DATABASE")
+# DATABASE = env.str("DATABASE")
 POSTGRES_URL = f"postgresql://{PG_USER}:{PG_PASSWORD}@{PG_HOST}/{PG_DB_NAME}"
 
 # PASSLOT

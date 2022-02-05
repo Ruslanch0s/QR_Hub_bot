@@ -48,11 +48,13 @@ async def print_choice(message, state, text_from_qr=None):
 
 
 @dp.message_handler(content_types=ContentType.TEXT)
+@dp.throttled(rate=5)
 async def get_text(message: types.Message, state: FSMContext):
     await print_choice(message, state)
 
 
 @dp.message_handler(content_types=['photo', 'document'])
+@dp.throttled(rate=5)
 async def get_text_from_qr(message: types.Message, state: FSMContext):
     user = message.from_user
     file_name = str(random.randint(1, 9999)) + '.png'
@@ -181,6 +183,7 @@ async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: 
 
 
 @dp.message_handler(content_types=['photo', 'document'], state="send_image")
+@dp.throttled(rate=5)
 async def get_picture(message: types.Message, state: FSMContext):
     user = message.from_user
     await message.answer(await user_language(user, "generating"), reply_markup=ReplyKeyboardRemove())
@@ -219,12 +222,14 @@ async def get_picture(message: types.Message, state: FSMContext):
 
 
 @dp.message_handler(content_types=ContentType.TEXT, state="send_image")
+@dp.throttled(rate=5)
 async def wrong_type(message: types.Message):
     await message.answer(await user_language(message.from_user, 'error_get_image'))
     logger.info(f'error - wrong_type(text) - {message.from_user.id} - {message.from_user.first_name}')
 
 
 @dp.message_handler(content_types=ContentType.ANY, state=["choice_of_option", "create_pkpass"])
+@dp.throttled(rate=5)
 async def wrong_choice(message: types.Message):
     await message.answer(await user_language(message.from_user, 'error_choice'))
     logger.info(f'error - error_choice(text) - {message.from_user.id} - {message.from_user.first_name}')
