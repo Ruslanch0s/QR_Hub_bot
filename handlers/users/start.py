@@ -2,27 +2,26 @@ from pathlib import Path
 
 import asyncpg
 from aiogram import types
+from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters.builtin import CommandStart
 
 from loader import dp
 from utils import user_language
-from utils.db_api.schemas.user import User
+from utils.db_api.schemas.users import User
+from utils.db_api.example import add_user, add_payment
+from middlewares.throttling import ThrottlingMiddleware
 
 
-@dp.message_handler(CommandStart())
-async def bot_start(message: types.Message):
+@dp.message_handler(CommandStart(), state='*')
+@dp.throttled(rate=4)
+async def bot_start(message: types.Message, state: FSMContext):
+    await state.reset_state(with_data=False)
     name = message.from_user.first_name
     id_user = message.from_user.id
-    try:
-        user = await User(
-            name=message.from_user.first_name,
-            id=id_user
-        ).create()
-    except asyncpg.UniqueViolationError:
-        user = await User.get(id_user)
+    await add_user(id_user, name, amount_gen=1, language=message.from_user.language_code)
 
     async def send_photo():
-        path_to_download = Path().joinpath("utils", "qrgenerator", "preview.jpg")
+        path_to_download = Path().joinpath("utils", "qrgenerator", "ert.jpg")  # preview
         with open(path_to_download, 'rb') as photo:
             await dp.bot.send_photo(message.chat.id, photo)
 

@@ -6,5 +6,6 @@ from utils.language import user_language
 
 
 @dp.message_handler(CommandHelp())
+@dp.throttled(rate=4)
 async def bot_help(message: types.Message):
     await message.answer(await user_language(message.from_user, 'help'))

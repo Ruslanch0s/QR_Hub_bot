@@ -3,7 +3,7 @@ from pathlib import Path
 
 import aiohttp
 
-from data.config import APP_KEY, TEMPLATE_ID
+from data.config import APP_KEY
 
 
 async def get_pkpass(path_to_download: Path, url: str):
@@ -18,7 +18,7 @@ async def get_pkpass(path_to_download: Path, url: str):
                 file.close()
 
 
-async def create_pkpass(text_for_generate: str):
+async def create_pkpass(text_for_generate: str, template_id: int):
     template_values = {'code': text_for_generate}
     kwargs = {}
     kwargs['data'] = json.dumps(template_values)
@@ -28,7 +28,7 @@ async def create_pkpass(text_for_generate: str):
         'Authorization': APP_KEY
     }
     async with aiohttp.ClientSession() as session:
-        async with session.post(f'https://api.passslot.com/v1/templates/{TEMPLATE_ID}/pass', headers=headers, **kwargs,
+        async with session.post(f'https://api.passslot.com/v1/templates/{template_id}/pass', headers=headers, **kwargs,
                                 ssl=False) as response:
             data = await response.json()
             print(response.status)

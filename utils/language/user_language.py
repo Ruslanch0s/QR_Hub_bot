@@ -1,7 +1,6 @@
-import logging
-
 from aiogram import types
 
+from utils.loggers.language import logger
 from . import english
 from . import russian
 
@@ -27,10 +26,10 @@ async def user_language(user: types.User, text: str) -> str:
     if language == "RU":
         try:
             return russian.data.get(text)
-        except Exception:
-            logging.error(f"Отсутствует ключ ({text}) в russian.data")
+        except Exception as err:
+            logger.error(f"Отсутствует ключ: ({text}) в russian.data\n{err}\n\n")
     else:
         try:
             return english.data.get(text)
-        except Exception:
-            logging.error(f"Отсутствует ключ ({text}) в english.data")
+        except Exception as err:
+            logger.error(f"Отсутствует ключ: ({text}) в english.data\n{err}\n\n")

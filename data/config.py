@@ -26,3 +26,7 @@ POSTGRES_URL = f"postgresql://{PG_USER}:{PG_PASSWORD}@{PG_HOST}/{PG_DB_NAME}"
 # PASSLOT
 APP_KEY = env.str("APP_KEY")
 TEMPLATE_ID = env.str("TEMPLATE_ID")
+
+# YOOKASSA
+SHOP_ID = env.str("SHOP_ID")
+SHOP_KEY = env.str("SHOP_KEY")

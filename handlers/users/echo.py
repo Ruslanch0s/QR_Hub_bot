@@ -2,11 +2,12 @@ from aiogram import types
 
 from loader import dp
 from utils.language import user_language
-
+from aiogram.dispatcher import FSMContext
 
 # Эхо хендлер, куда летят текстовые сообщения без указанного состояния
 @dp.message_handler(state=None)
-async def bot_echo(message: types.Message):
+async def bot_echo(message: types.Message, state: FSMContext):
+    await state.reset_state(with_data=False)
     await message.answer(await user_language(message.from_user, 'start'))
 
 

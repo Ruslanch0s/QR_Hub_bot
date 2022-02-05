@@ -3,21 +3,22 @@ from pathlib import Path
 
 from aiogram import types
 from aiogram.dispatcher import FSMContext
-from aiogram.types import ContentType, ReplyKeyboardMarkup, ReplyKeyboardRemove, InlineKeyboardMarkup
+from aiogram.types import ContentType, ReplyKeyboardRemove
 
-# from keyboards.default import cancel_button
 from keyboards.inline import images_keyboard, template_button, add_to_wallet_button, image_callback, \
-    template_callback, wallet_callback, cancel_button, cancel_callback, create_pkpass_button, create_pkpass_keyboard, \
-    create_pkpass_callback, pay_pkpass_keyboard
+    template_callback, wallet_callback, cancel_button, cancel_callback, create_pkpass_keyboard, \
+    create_pkpass_callback, pay_pkpass_keyboard, pay_pkpass_button
 from loader import dp
 from utils import user_language, logger
-from utils.db_api.schemas.user import User
+from utils.db_api.schemas.users import User
 from utils.pkpass.main import get_pkpass, create_pkpass
 from utils.qrgenerator import gen_qr_code, read_qr_code
 
 
 @dp.callback_query_handler(cancel_callback.filter(), state="*")
 async def cancel_state(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.message.edit_reply_markup()
+
     user = callback_query.from_user
     await dp.bot.send_message(callback_query.from_user.id, await user_language(user, "canceled"))
     await state.reset_state(with_data=False)
@@ -73,8 +74,24 @@ async def get_text_from_qr(message: types.Message, state: FSMContext):
         logger.info(f'error - read-qr - {message.from_user.id} - {message.from_user.first_name}')
 
 
+@dp.callback_query_handler(template_callback.filter(), state="choice_of_option")
+async def view_templates(callback_query: types.CallbackQuery, state: FSMContext):
+    await callback_query.message.edit_reply_markup()
+
+    await state.set_state("send_image")
+    path_to_download = Path().joinpath("utils", "qrgenerator", "templates", "view_template.jpg")
+    with open(path_to_download, 'rb') as photo:
+        await dp.bot.send_photo(callback_query.message.chat.id, photo)
+
+    cancel_button.text = await user_language(callback_query.from_user, "cancel_button")
+    await callback_query.message.answer(str(await user_language(callback_query.from_user, 'background')),
+                                        reply_markup=images_keyboard)
+
+
 @dp.callback_query_handler(image_callback.filter(), state="send_image")
 async def print_create_qr(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
+    await callback_query.message.edit_reply_markup()
+
     user = callback_query.from_user
     await callback_query.message.answer(await user_language(user, "generating"),
                                         reply_markup=ReplyKeyboardRemove())
@@ -104,52 +121,59 @@ async def print_create_qr(callback_query: types.CallbackQuery, callback_data: di
     path_to_save.unlink()
 
 
-@dp.callback_query_handler(template_callback.filter(), state="choice_of_option")
-async def view_templates(callback_query: types.CallbackQuery, state: FSMContext):
-    await state.set_state("send_image")
-    path_to_download = Path().joinpath("utils", "qrgenerator", "templates", "view_template.jpg")
-    with open(path_to_download, 'rb') as photo:
-        await dp.bot.send_photo(callback_query.message.chat.id, photo)
-
-    cancel_button.text = await user_language(callback_query.from_user, "cancel_button")
-    await callback_query.message.answer(str(await user_language(callback_query.from_user, 'background')),
-                                        reply_markup=images_keyboard)
-
-
 @dp.callback_query_handler(wallet_callback.filter(), state="choice_of_option")
 async def check_fot_wallet(callback_query: types.CallbackQuery, state: FSMContext):
-    await state.set_state('create_pkpass')
-    user = await User.get(callback_query.from_user.id)
+    await callback_query.message.edit_reply_markup()
+
+    from_user = callback_query.from_user
+    user = await User.get(from_user.id)
     count_gen = user.amount_gen
 
     if count_gen > 0:
-        create_pkpass_button.text = await user_language(callback_query.from_user, 'create_pkpass_button')
-        await callback_query.message.answer(f'Вам доступно {count_gen} генерации', reply_markup=create_pkpass_keyboard)
+        path_to_download = Path().joinpath("utils", "pkpass", "123.jpg")
+        with open(path_to_download, 'rb') as photo:
+            await dp.bot.send_photo(from_user.id, photo)
+        await callback_query.message.answer(str(await user_language(from_user, 'available_quantity')).format(count_gen))
+        await callback_query.message.answer(await user_language(from_user, 'select_pkpass_template'),
+                                            reply_markup=create_pkpass_keyboard)
+        await state.set_state('create_pkpass')
     else:
-        await callback_query.message.answer('У вас закончился лимит создания карт для Apple Wallet',
+        pay_pkpass_button.text = await user_language(from_user, 'pay_pkpass_button')
+        await callback_query.message.answer(await user_language(from_user, 'error_limit'),
                                             reply_markup=pay_pkpass_keyboard)
+        await state.set_state('limit')
 
 
 @dp.callback_query_handler(create_pkpass_callback.filter(), state="create_pkpass")
-async def add_to_wallet(callback_query: types.CallbackQuery, state: FSMContext):
-    await callback_query.message.answer('Генерирую')
+async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     user = await User.get(callback_query.from_user.id)
-    await user.update(amount_gen=user.amount_gen - 1).apply()  # apply - применить
+    if user.amount_gen <= 0:
+        await check_fot_wallet(callback_query=callback_query, state=state)
+
+    await callback_query.message.edit_reply_markup()
+    await callback_query.message.answer(await user_language(callback_query.from_user, 'generating'))
     await state.reset_state(with_data=False)
     data = await state.get_data()
     text_for_generate = data.get('send_image')
+    print(text_for_generate)
+    template_id = callback_data.get('template_id')
+    print(template_id)
     path_to_download = Path().joinpath("utils", "pkpass", "files", f"{callback_query.from_user.id}.pkpass")
     try:
-        url_to_download = await create_pkpass(text_for_generate=text_for_generate)
+        url_to_download = await create_pkpass(text_for_generate=text_for_generate, template_id=template_id)
         await get_pkpass(path_to_download=path_to_download, url=url_to_download)
 
         file = types.InputFile(path_or_bytesio=path_to_download)
         await dp.bot.send_document(callback_query.from_user.id, document=file)
         path_to_download.unlink()
-        await callback_query.message.answer('Готово')
+        await callback_query.message.answer(await user_language(callback_query.from_user, 'success'))
+
+        await user.update(amount_gen=user.amount_gen - 1).apply()
         logger.info(
             f'success - generate_pkpass - {callback_query.from_user.id} - {callback_query.from_user.first_name}')
-    except Exception:
+
+    except Exception as err:
+        print(err)
         logger.info(f'error - generate_pkpass - {callback_query.from_user.id} - {callback_query.from_user.first_name}')
         await callback_query.message.answer(await user_language(callback_query.from_user, "error_generate_pkpass"))
 
@@ -200,7 +224,7 @@ async def wrong_type(message: types.Message):
     logger.info(f'error - wrong_type(text) - {message.from_user.id} - {message.from_user.first_name}')
 
 
-@dp.message_handler(content_types=ContentType.ANY, state="choice_of_option")
+@dp.message_handler(content_types=ContentType.ANY, state=["choice_of_option", "create_pkpass"])
 async def wrong_choice(message: types.Message):
     await message.answer(await user_language(message.from_user, 'error_choice'))
     logger.info(f'error - error_choice(text) - {message.from_user.id} - {message.from_user.first_name}')
