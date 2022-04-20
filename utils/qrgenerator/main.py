@@ -114,7 +114,3 @@ def gen_qr_code(message, path_to_download, path_to_save=None):
     background.save(path_to_download)
     return True
 
-
-if __name__ == '__main__':
-    gen_qr_code(message='marlins-trainer.ru', path_to_download='4223.png')
-    read_qr_code(path_to_download=None)
