@@ -2,12 +2,14 @@ from aiogram import types
 from aiogram.dispatcher import FSMContext
 
 from loader import dp
+from utils import analytics
 from utils.language import user_language
 
 
 # Эхо хендлер, куда летят текстовые сообщения без указанного состояния
 @dp.message_handler(state=None)
 @dp.throttled(rate=5)
+@analytics
 async def bot_echo(message: types.Message, state: FSMContext):
     await state.reset_state(with_data=False)
     await message.answer(await user_language(message.from_user, 'start'))

@@ -9,13 +9,14 @@ from keyboards.inline import images_keyboard, template_button, add_to_wallet_but
     template_callback, wallet_callback, cancel_button, cancel_callback, create_pkpass_keyboard, \
     create_pkpass_callback, pay_pkpass_keyboard, pay_pkpass_button
 from loader import dp
-from utils import user_language, logger
+from utils import user_language, logger, analytics
 from utils.db_api.schemas.users import User
 from utils.pkpass.main import get_pkpass, create_pkpass
 from utils.qrgenerator import gen_qr_code, read_qr_code
 
 
 @dp.callback_query_handler(cancel_callback.filter(), state="*")
+@analytics
 async def cancel_state(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.message.edit_reply_markup()
 
@@ -77,6 +78,7 @@ async def get_text_from_qr(message: types.Message, state: FSMContext):
 
 
 @dp.callback_query_handler(template_callback.filter(), state="choice_of_option")
+@analytics
 async def view_templates(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.message.edit_reply_markup()
 
@@ -91,6 +93,7 @@ async def view_templates(callback_query: types.CallbackQuery, state: FSMContext)
 
 
 @dp.callback_query_handler(image_callback.filter(), state="send_image")
+@analytics
 async def print_create_qr(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     await callback_query.message.edit_reply_markup()
 
@@ -124,6 +127,7 @@ async def print_create_qr(callback_query: types.CallbackQuery, callback_data: di
 
 
 @dp.callback_query_handler(wallet_callback.filter(), state="choice_of_option")
+@analytics
 async def check_fot_wallet(callback_query: types.CallbackQuery, state: FSMContext):
     await callback_query.message.edit_reply_markup()
 
@@ -138,6 +142,7 @@ async def check_fot_wallet(callback_query: types.CallbackQuery, state: FSMContex
 
 
 @dp.callback_query_handler(create_pkpass_callback.filter(), state="create_pkpass")
+@analytics
 async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
     await callback_query.message.edit_reply_markup()
     await callback_query.message.answer(await user_language(callback_query.from_user, 'generating'))
@@ -169,6 +174,7 @@ async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: 
 
 @dp.message_handler(content_types=['photo', 'document'], state="send_image")
 @dp.throttled(rate=5)
+@analytics
 async def get_picture(message: types.Message, state: FSMContext):
     user = message.from_user
     await message.answer(await user_language(user, "generating"), reply_markup=ReplyKeyboardRemove())
@@ -208,6 +214,7 @@ async def get_picture(message: types.Message, state: FSMContext):
 
 @dp.message_handler(content_types=ContentType.TEXT, state="send_image")
 @dp.throttled(rate=5)
+@analytics
 async def wrong_type(message: types.Message):
     await message.answer(await user_language(message.from_user, 'error_get_image'))
     logger.info(f'error - wrong_type(text) - {message.from_user.id} - {message.from_user.first_name}')
@@ -215,6 +222,7 @@ async def wrong_type(message: types.Message):
 
 @dp.message_handler(content_types=ContentType.ANY, state=["choice_of_option", "create_pkpass"])
 @dp.throttled(rate=5)
+@analytics
 async def wrong_choice(message: types.Message):
     await message.answer(await user_language(message.from_user, 'error_choice'))
     logger.info(f'error - error_choice(text) - {message.from_user.id} - {message.from_user.first_name}')

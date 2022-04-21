@@ -12,16 +12,18 @@ from sqlalchemy import and_
 from utils.loggers.database import logger
 
 
-async def add_user(id_user: int, name: str, amount_gen: int = 0, language: str = None):
+async def add_user(id_user: int, name: str, language: str = None):
     try:
         await User(
-            name=name,
             id=id_user,
-            amount_gen=amount_gen,
-            language=language
+            name=name,
+            language=language,
+            touch_points=0
         ).create()
     except asyncpg.UniqueViolationError as err:
-        logger.info(f'error - add_user:\n{err}')
+        user = await User.get(id_user)  # only ID
+        touch_points = user.touch_points + 1
+        await user.update(touch_points=touch_points).apply()  # apply - применить
 
 
 async def add_payment(id: int, user_id: int, status: str):
@@ -35,6 +37,10 @@ async def select_pending_payments(user_id: int):
     payments = await Payment.query.where(and_(Payment.user_id == user_id, Payment.status == "pending")).gino.all()
     return payments
 
+
+async def update_touch_points(id: int, touch_points: int):
+    user = await User.get(id)  # only ID
+    await user.update(touch_points=touch_points).apply()  # apply - применить
 
 
 """
@@ -60,4 +66,6 @@ async def count_users():
 async def update_user_email(id: int, email: str):
     user = await User.get(id)  # only ID
     await user.update(email=email).apply()  # apply - применить
+
+
 

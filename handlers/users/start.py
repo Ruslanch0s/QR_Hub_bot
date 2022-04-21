@@ -10,15 +10,15 @@ from utils import user_language
 from utils.db_api.schemas.users import User
 from utils.db_api.example import add_user, add_payment
 from middlewares.throttling import ThrottlingMiddleware
+from utils import analytics
 
 
 @dp.message_handler(CommandStart(), state='*')
 @dp.throttled(rate=4)
+@analytics
 async def bot_start(message: types.Message, state: FSMContext):
     await state.reset_state(with_data=False)
     name = message.from_user.first_name
-    id_user = message.from_user.id
-    await add_user(id_user, name, amount_gen=1, language=message.from_user.language_code)
 
     async def send_photo():
         path_to_download = Path().joinpath("utils", "qrgenerator", "ert.jpg")  # preview

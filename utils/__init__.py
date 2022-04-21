@@ -5,3 +5,5 @@ from . import qrgenerator
 from .language.user_language import user_language
 from .loggers.generation import logger
 from .payment import create_payment, get_update
+from .analytics import analytics
+
