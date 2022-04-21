@@ -128,33 +128,19 @@ async def check_fot_wallet(callback_query: types.CallbackQuery, state: FSMContex
     await callback_query.message.edit_reply_markup()
 
     from_user = callback_query.from_user
-    user = await User.get(from_user.id)
-    count_gen = user.amount_gen
 
-    if count_gen > 0:
-        path_to_download = Path().joinpath("utils", "pkpass", "123.jpg")
-        with open(path_to_download, 'rb') as photo:
-            await dp.bot.send_photo(from_user.id, photo)
-        await callback_query.message.answer(str(await user_language(from_user, 'available_quantity')).format(count_gen))
-        await callback_query.message.answer(await user_language(from_user, 'select_pkpass_template'),
-                                            reply_markup=create_pkpass_keyboard)
-        await state.set_state('create_pkpass')
-    else:
-        pay_pkpass_button.text = await user_language(from_user, 'pay_pkpass_button')
-        await callback_query.message.answer(await user_language(from_user, 'error_limit'),
-                                            reply_markup=pay_pkpass_keyboard)
-        await state.set_state('limit')
+    path_to_download = Path().joinpath("utils", "pkpass", "123.jpg")
+    with open(path_to_download, 'rb') as photo:
+        await dp.bot.send_photo(from_user.id, photo)
+    await callback_query.message.answer(await user_language(from_user, 'select_pkpass_template'),
+                                        reply_markup=create_pkpass_keyboard)
+    await state.set_state('create_pkpass')
 
 
 @dp.callback_query_handler(create_pkpass_callback.filter(), state="create_pkpass")
 async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: dict, state: FSMContext):
-    user = await User.get(callback_query.from_user.id)
-    if user.amount_gen <= 0:
-        await check_fot_wallet(callback_query=callback_query, state=state)
-
     await callback_query.message.edit_reply_markup()
     await callback_query.message.answer(await user_language(callback_query.from_user, 'generating'))
-    await state.reset_state(with_data=False)
     data = await state.get_data()
     text_for_generate = data.get('send_image')
     print(text_for_generate)
@@ -169,8 +155,6 @@ async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: 
         await dp.bot.send_document(callback_query.from_user.id, document=file)
         path_to_download.unlink()
         await callback_query.message.answer(await user_language(callback_query.from_user, 'success'))
-
-        await user.update(amount_gen=user.amount_gen - 1).apply()
         logger.info(
             f'success - generate_pkpass - {callback_query.from_user.id} - {callback_query.from_user.first_name}')
 
@@ -180,6 +164,7 @@ async def create_the_pkpass(callback_query: types.CallbackQuery, callback_data: 
         await callback_query.message.answer(await user_language(callback_query.from_user, "error_generate_pkpass"))
 
     await callback_query.message.answer(await user_language(callback_query.from_user, "start"))
+    await state.reset_state(with_data=False)
 
 
 @dp.message_handler(content_types=['photo', 'document'], state="send_image")

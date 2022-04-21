@@ -19,8 +19,6 @@ data = {
     'select_pkpass_template': '<b>Choose a template number</b>',
     'confirm_pay': 'After the purchase, 3 cards will be available to you for Apple Wallet.\n'
                    'Price: 35р',
-    'available_quantity': 'You have {0} cards to create',
-
     'error_format': 'The image format is not suitable, please try another one.',
     'error_get_image': 'Send a picture or choose a template 👆',
     'error_generate_pkpass': 'Error generating card for Apple Wallet, check the spelling of the link URL or try again later\n'
